@@ -13,7 +13,7 @@ function Bubble({ who, text }) {
           "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
           isUser
             ? "bg-sky-500 text-slate-950"
-            : "border border-white/10 bg-white/5 text-slate-100",
+            : "border border-white/10 bg-slate-800/90 text-slate-100 shadow-[0_1px_20px_rgba(15,23,42,0.15)]",
         ].join(" ")}
       >
         {text}
@@ -80,34 +80,34 @@ export default function ChatbotWidget() {
   return (
     <div className="fixed bottom-5 right-5 z-50">
       {open ? (
-        <GlassCard className="w-[340px] overflow-hidden">
-          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+        <GlassCard className="w-[340px] overflow-hidden bg-slate-950/95 ring-1 ring-white/10">
+          <div className="flex items-center justify-between border-b border-white/10 bg-slate-950/90 px-4 py-3">
             <div>
               <div className="text-sm font-semibold">TalentOrbit Assistant</div>
               <div className="text-[11px] text-slate-300">Local helper (no external AI)</div>
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs hover:bg-white/10"
+              className="rounded-xl border border-white/10 bg-slate-900/70 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-900/90"
             >
               Close
             </button>
           </div>
 
-          <div ref={listRef} className="max-h-[360px] space-y-2 overflow-auto px-4 py-3">
+          <div ref={listRef} className="max-h-[360px] space-y-2 overflow-auto bg-slate-950/80 px-4 py-3">
             {messages.map((m, idx) => (
               <Bubble key={idx} who={m.who} text={m.text} />
             ))}
             {busy ? <div className="text-xs text-slate-300">Typing…</div> : null}
           </div>
 
-          <div className="border-t border-white/10 px-4 py-3">
+          <div className="border-t border-white/10 bg-slate-950/90 px-4 py-3">
             <div className="mb-2 flex flex-wrap gap-2">
               {quick.map((q) => (
                 <button
                   key={q}
                   onClick={() => send(q)}
-                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 hover:bg-white/10"
+                  className="rounded-full border border-white/10 bg-slate-900/70 px-3 py-1 text-xs text-slate-200 hover:bg-slate-900/90"
                 >
                   {q}
                 </button>
