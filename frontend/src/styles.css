@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100;
+  }
+}
+
+@layer components {
+  .app-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(1100px 620px at 18% 12%, rgba(56, 189, 248, 0.20), transparent 58%),
+      radial-gradient(980px 680px at 88% 18%, rgba(167, 139, 250, 0.16), transparent 60%),
+      radial-gradient(900px 680px at 50% 105%, rgba(52, 211, 153, 0.14), transparent 62%),
+      radial-gradient(520px 420px at 55% 45%, rgba(244, 114, 182, 0.10), transparent 62%),
+      linear-gradient(to bottom, rgba(2, 6, 23, 0.15), rgba(2, 6, 23, 0.92));
+  }
+
+  .app-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(circle at 40% 10%, black 18%, transparent 62%);
+    opacity: 0.28;
+  }
+
+  .home-hero {
+    background:
+      radial-gradient(900px 520px at 18% 18%, rgba(56, 189, 248, 0.22), transparent 55%),
+      radial-gradient(900px 520px at 70% 25%, rgba(244, 114, 182, 0.16), transparent 58%),
+      radial-gradient(900px 520px at 85% 55%, rgba(167, 139, 250, 0.14), transparent 60%),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.92), rgba(241, 245, 249, 0.92));
+  }
+
+  .home-wave {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 120px;
+    background:
+      radial-gradient(120px 70px at 10% 70%, rgba(255, 255, 255, 0.95), transparent 70%),
+      radial-gradient(180px 90px at 30% 80%, rgba(255, 255, 255, 0.95), transparent 72%),
+      radial-gradient(220px 120px at 55% 90%, rgba(255, 255, 255, 0.95), transparent 72%),
+      radial-gradient(260px 140px at 85% 95%, rgba(255, 255, 255, 0.95), transparent 72%);
+    filter: blur(0.2px);
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+

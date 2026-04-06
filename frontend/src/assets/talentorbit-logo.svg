@@ -1,0 +1,32 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="18" y1="18" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38BDF8"/>
+      <stop offset="0.5" stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#34D399"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feColorMatrix in="b" type="matrix" values="
+        1 0 0 0 0
+        0 1 0 0 0
+        0 0 1 0 0
+        0 0 0 0.35 0" result="c"/>
+      <feMerge>
+        <feMergeNode in="c"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Core -->
+  <circle cx="64" cy="64" r="12" fill="url(#g1)" filter="url(#glow)"/>
+
+  <!-- Orbit -->
+  <path d="M22 66C28 38 50 22 74 22C98 22 112 40 106 64C100 88 78 106 54 106C30 106 16 94 22 66Z"
+        stroke="url(#g1)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+
+  <!-- Satellite -->
+  <circle cx="100" cy="42" r="6" fill="#E2E8F0" opacity="0.9"/>
+</svg>
+

@@ -1,0 +1,129 @@
+import mongoose from "mongoose";
+import { Job } from "../models/Job.js";
+import { Application } from "../models/Application.js";
+
+export async function createJob(req, res) {
+  const payload = {
+    recruiterId: req.user.id,
+    title: req.body.title,
+    description: req.body.description,
+    requiredSkills: Array.isArray(req.body.requiredSkills)
+      ? req.body.requiredSkills
+      : typeof req.body.requiredSkills === "string"
+        ? req.body.requiredSkills.split(",").map((s) => s.trim()).filter(Boolean)
+        : [],
+    salaryMin: Number(req.body.salaryMin || 0),
+    salaryMax: Number(req.body.salaryMax || 0),
+    experienceLevel: req.body.experienceLevel,
+    category: req.body.category,
+    location: req.body.location,
+    isActive: req.body.isActive ?? true,
+  };
+  const job = await Job.create(payload);
+  return res.status(201).json({ job });
+}
+
+export async function updateJob(req, res) {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) return res.status(400).json({ message: "Invalid job id" });
+
+  const job = await Job.findById(id);
+  if (!job) return res.status(404).json({ message: "Job not found" });
+  if (String(job.recruiterId) !== req.user.id && req.user.role !== "admin")
+    return res.status(403).json({ message: "Forbidden" });
+
+  const fields = [
+    "title",
+    "description",
+    "salaryMin",
+    "salaryMax",
+    "experienceLevel",
+    "category",
+    "location",
+    "isActive",
+  ];
+  for (const f of fields) {
+    if (req.body[f] !== undefined) job[f] = req.body[f];
+  }
+  if (req.body.requiredSkills !== undefined) {
+    job.requiredSkills = Array.isArray(req.body.requiredSkills)
+      ? req.body.requiredSkills
+      : typeof req.body.requiredSkills === "string"
+        ? req.body.requiredSkills.split(",").map((s) => s.trim()).filter(Boolean)
+        : [];
+  }
+  await job.save();
+  return res.json({ job });
+}
+
+export async function deleteJob(req, res) {
+  const { id } = req.params;
+  const job = await Job.findById(id);
+  if (!job) return res.status(404).json({ message: "Job not found" });
+  if (String(job.recruiterId) !== req.user.id && req.user.role !== "admin")
+    return res.status(403).json({ message: "Forbidden" });
+
+  await Application.deleteMany({ jobId: job._id });
+  await job.deleteOne();
+  return res.json({ ok: true });
+}
+
+export async function getJob(req, res) {
+  const { id } = req.params;
+  const job = await Job.findById(id).populate("recruiterId", "name email company").lean();
+  if (!job) return res.status(404).json({ message: "Job not found" });
+  return res.json({ job });
+}
+
+export async function listJobs(req, res) {
+  const page = Math.max(1, Number(req.query.page || 1));
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit || 10)));
+  const skip = (page - 1) * limit;
+
+  const q = (req.query.q || "").toString().trim();
+  const category = (req.query.category || "").toString().trim();
+  const location = (req.query.location || "").toString().trim();
+  const experience = (req.query.experience || "").toString().trim();
+  const minSalary = req.query.minSalary !== undefined ? Number(req.query.minSalary) : undefined;
+  const maxSalary = req.query.maxSalary !== undefined ? Number(req.query.maxSalary) : undefined;
+  const skills = (req.query.skills || "")
+    .toString()
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const filter = { isActive: true };
+  if (q) filter.$text = { $search: q };
+  if (category) filter.category = category;
+  if (location) filter.location = location;
+  if (experience) filter.experienceLevel = experience;
+  if (skills.length) filter.requiredSkills = { $all: skills };
+  if (!Number.isNaN(minSalary) && minSalary !== undefined) filter.salaryMax = { $gte: minSalary };
+  if (!Number.isNaN(maxSalary) && maxSalary !== undefined)
+    filter.salaryMin = { ...(filter.salaryMin || {}), $lte: maxSalary };
+
+  const [items, total] = await Promise.all([
+    Job.find(filter)
+      .sort(q ? { score: { $meta: "textScore" }, createdAt: -1 } : { createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("recruiterId", "name company")
+      .lean(),
+    Job.countDocuments(filter),
+  ]);
+
+  return res.json({
+    page,
+    limit,
+    total,
+    pages: Math.ceil(total / limit),
+    items,
+  });
+}
+
+export async function listRecruiterJobs(req, res) {
+  const recruiterId = req.user.id;
+  const jobs = await Job.find({ recruiterId }).sort({ createdAt: -1 }).lean();
+  return res.json({ jobs });
+}
+
