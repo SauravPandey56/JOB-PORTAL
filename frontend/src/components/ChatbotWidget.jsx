@@ -179,7 +179,7 @@ export default function ChatbotWidget() {
               <button
                 type="submit"
                 disabled={busy}
-                className="shrink-0 rounded-xl bg-primary px-4 py-2 text-small font-semibold text-white shadow-sm transition hover:bg-accent disabled:opacity-50"
+                className="shrink-0 rounded-xl bg-primary px-4 py-2 text-small font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
               >
                 Send
               </button>
@@ -191,7 +191,7 @@ export default function ChatbotWidget() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="chat-launcher-pulse rounded-2xl bg-primary px-5 py-3 text-small font-semibold text-white shadow-lg shadow-primary/25 transition hover:bg-accent hover:shadow-card-hover active:scale-[0.98]"
+        className="chat-launcher-pulse rounded-2xl bg-primary px-5 py-3 text-small font-semibold text-white shadow-lg shadow-primary/25 transition hover:bg-blue-700 hover:shadow-card-hover active:scale-[0.98]"
         aria-expanded={open}
         aria-controls="chat-panel"
       >

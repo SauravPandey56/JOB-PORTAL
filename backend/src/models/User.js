@@ -43,6 +43,12 @@ const userSchema = new mongoose.Schema(
     // Recruiter profile
     company: recruiterCompanySchema,
 
+    /** Candidate bookmarked jobs (max enforced in controller) */
+    savedJobs: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
+      default: [],
+    },
+
     isBlocked: { type: Boolean, default: false, index: true },
     /** Recruiters pending admin verification; true/undefined = verified for legacy users */
     recruiterVerified: { type: Boolean, default: true, index: true },

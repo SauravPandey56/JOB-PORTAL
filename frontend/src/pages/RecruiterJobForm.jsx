@@ -17,6 +17,7 @@ export default function RecruiterJobForm() {
   const [experienceLevel, setExperienceLevel] = useState("");
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
+  const [workMode, setWorkMode] = useState("onsite");
   const [isActive, setIsActive] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -32,6 +33,7 @@ export default function RecruiterJobForm() {
       setExperienceLevel(j.experienceLevel || "");
       setCategory(j.category || "");
       setLocation(j.location || "");
+      setWorkMode(["onsite", "remote", "hybrid"].includes(j.workMode) ? j.workMode : "onsite");
       setIsActive(!!j.isActive);
     });
   }, [id, isEdit]);
@@ -49,6 +51,7 @@ export default function RecruiterJobForm() {
         experienceLevel,
         category,
         location,
+        workMode,
         isActive,
       };
       if (isEdit) await api.put(`/jobs/${id}`, payload);
@@ -102,7 +105,19 @@ export default function RecruiterJobForm() {
               <label className="text-sm text-slate-200">Location</label>
               <input className="mt-1 w-full rounded-xl bg-slate-900/60 border-white/10" value={location} onChange={(e) => setLocation(e.target.value)} />
             </div>
-            <div className="flex items-center gap-2 pt-6">
+            <div>
+              <label className="text-sm text-slate-200">Work mode</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-100"
+                value={workMode}
+                onChange={(e) => setWorkMode(e.target.value)}
+              >
+                <option value="onsite">Onsite</option>
+                <option value="remote">Remote</option>
+                <option value="hybrid">Hybrid</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2 sm:col-span-2">
               <input id="active" type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="rounded border-white/10 bg-slate-900/60" />
               <label htmlFor="active" className="text-sm text-slate-200">
                 Active

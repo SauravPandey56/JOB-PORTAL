@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
+  Bookmark,
   Briefcase,
   Calendar,
   ChevronRight,
-  CircleX,
+  Bell,
   ClipboardList,
   ExternalLink,
   Plus,
@@ -135,7 +136,7 @@ function RecruiterDashboard() {
     setActionId(id);
     try {
       await api.put(`/applications/${id}/status`, { status });
-      toast.success(status === "shortlisted" ? "Candidate shortlisted" : "Candidate rejected");
+      toast.success("Application status updated");
       await load();
     } catch (e) {
       toast.error(e?.response?.data?.message || "Update failed");
@@ -153,11 +154,25 @@ function RecruiterDashboard() {
   const appStatusClass = (s) => {
     const map = {
       applied: "bg-sky-50 text-sky-800 ring-sky-200",
+      under_review: "bg-slate-50 text-slate-800 ring-slate-200",
       shortlisted: "bg-emerald-50 text-emerald-800 ring-emerald-200",
+      interview: "bg-violet-50 text-violet-800 ring-violet-200",
       rejected: "bg-rose-50 text-rose-800 ring-rose-200",
+      selected: "bg-emerald-50 text-emerald-900 ring-emerald-300",
     };
     return map[s] || "bg-slate-50 text-slate-700 ring-slate-200";
   };
+
+  const formatAppStatus = (s) => (s ? String(s).replaceAll("_", " ") : "—");
+
+  const recruiterStatusOptions = [
+    { value: "applied", label: "Applied" },
+    { value: "under_review", label: "Under review" },
+    { value: "shortlisted", label: "Shortlisted" },
+    { value: "interview", label: "Interview" },
+    { value: "rejected", label: "Rejected" },
+    { value: "selected", label: "Selected" },
+  ];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:py-10">
@@ -285,7 +300,7 @@ function RecruiterDashboard() {
                               </Link>
                               <Link
                                 to={`/recruiter/jobs/${j._id}/edit`}
-                                className="inline-flex min-h-[2.25rem] items-center rounded-xl bg-primary px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-accent"
+                                className="inline-flex min-h-[2.25rem] items-center rounded-xl bg-primary px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700"
                               >
                                 Edit job
                               </Link>
@@ -306,7 +321,7 @@ function RecruiterDashboard() {
               Applicants pipeline
             </h2>
             <p className="mb-4 text-small text-slate-600">
-              Stages reflect your current TalentOrbit statuses. Additional steps unlock as you extend hiring states.
+              Stages map to application statuses: screening is under review, offer is shortlisted, hired is selected.
             </p>
             <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-card sm:flex-row sm:items-stretch sm:justify-between sm:gap-2 sm:p-5">
               <PipelineStep label="Applied" count={loading ? "—" : pipeline.applied ?? 0} accent="text-sky-600" />
@@ -382,11 +397,11 @@ function RecruiterDashboard() {
                             <td className="px-4 py-4">
                               <span
                                 className={[
-                                  "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ring-inset",
+                                  "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
                                   appStatusClass(a.status),
                                 ].join(" ")}
                               >
-                                {a.status}
+                                {formatAppStatus(a.status)}
                               </span>
                             </td>
                             <td className="px-4 py-4">
@@ -410,26 +425,19 @@ function RecruiterDashboard() {
                                     Resume
                                   </a>
                                 ) : null}
-                                {a.status !== "shortlisted" ? (
-                                  <button
-                                    type="button"
-                                    disabled={actionId === a._id}
-                                    onClick={() => setApplicationStatus(a._id, "shortlisted")}
-                                    className="inline-flex min-h-[2rem] items-center rounded-lg bg-emerald-600 px-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
-                                  >
-                                    Shortlist
-                                  </button>
-                                ) : null}
-                                {a.status !== "rejected" ? (
-                                  <button
-                                    type="button"
-                                    disabled={actionId === a._id}
-                                    onClick={() => setApplicationStatus(a._id, "rejected")}
-                                    className="inline-flex min-h-[2rem] items-center rounded-lg border border-rose-200 bg-rose-50 px-2.5 text-xs font-semibold text-rose-800 transition hover:bg-rose-100 disabled:opacity-50"
-                                  >
-                                    Reject
-                                  </button>
-                                ) : null}
+                                <select
+                                  aria-label="Update application status"
+                                  disabled={actionId === a._id}
+                                  value={a.status || "applied"}
+                                  onChange={(e) => setApplicationStatus(a._id, e.target.value)}
+                                  className="min-h-[2rem] max-w-[10.5rem] rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-dark shadow-sm transition hover:border-primary/30 disabled:opacity-50"
+                                >
+                                  {recruiterStatusOptions.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                      {opt.label}
+                                    </option>
+                                  ))}
+                                </select>
                               </div>
                             </td>
                           </tr>
@@ -513,11 +521,11 @@ function CandidateDashboard() {
   const stats = useMemo(() => {
     const list = applications;
     const total = list.length;
-    const shortlisted = list.filter((a) => a.status === "shortlisted").length;
+    const underReview = list.filter((a) => a.status === "under_review").length;
+    const interview = list.filter((a) => a.status === "interview").length;
+    const selected = list.filter((a) => a.status === "selected").length;
     const rejected = list.filter((a) => a.status === "rejected").length;
-    /** Pipeline step not in API yet — show 0 with copy */
-    const interviews = 0;
-    return { total, shortlisted, rejected, interviews };
+    return { total, underReview, interview, selected, rejected };
   }, [applications]);
 
   const recent = useMemo(() => {
@@ -532,11 +540,16 @@ function CandidateDashboard() {
   const statusStyle = (s) => {
     const map = {
       applied: "bg-sky-50 text-sky-800 ring-sky-200",
+      under_review: "bg-slate-50 text-slate-800 ring-slate-200",
       shortlisted: "bg-emerald-50 text-emerald-800 ring-emerald-200",
+      interview: "bg-violet-50 text-violet-800 ring-violet-200",
       rejected: "bg-rose-50 text-rose-800 ring-rose-200",
+      selected: "bg-emerald-50 text-emerald-900 ring-emerald-300",
     };
     return map[s] || "bg-slate-50 text-slate-700 ring-slate-200";
   };
+
+  const formatStatusLabel = (s) => (s ? String(s).replaceAll("_", " ") : "");
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:py-10">
@@ -601,25 +614,25 @@ function CandidateDashboard() {
           accent="from-sky-500 to-blue-600"
         />
         <StatCard
-          icon={Star}
-          label="Shortlisted"
-          value={loading ? "—" : stats.shortlisted}
-          hint="Recruiters marked you as a strong match."
-          accent="from-emerald-500 to-teal-600"
+          icon={ClipboardList}
+          label="Under review"
+          value={loading ? "—" : stats.underReview}
+          hint="Recruiters are reviewing your profile for these roles."
+          accent="from-slate-500 to-slate-700"
         />
         <StatCard
           icon={Video}
           label="Interviews"
-          value={loading ? "—" : stats.interviews}
-          hint="Interview invites will show here when recruiters use that step."
+          value={loading ? "—" : stats.interview}
+          hint="Roles where your status moved to interview."
           accent="from-violet-500 to-indigo-600"
         />
         <StatCard
-          icon={CircleX}
-          label="Rejected"
-          value={loading ? "—" : stats.rejected}
-          hint="Closed applications — keep exploring new roles."
-          accent="from-slate-500 to-slate-700"
+          icon={Star}
+          label="Selected"
+          value={loading ? "—" : stats.selected}
+          hint="Congratulations — offers and selections land here."
+          accent="from-emerald-500 to-teal-600"
         />
       </div>
 
@@ -677,11 +690,11 @@ function CandidateDashboard() {
                     <div className="flex shrink-0 items-center gap-3">
                       <span
                         className={[
-                          "rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ring-inset",
+                          "rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
                           statusStyle(a.status),
                         ].join(" ")}
                       >
-                        {a.status}
+                        {formatStatusLabel(a.status)}
                       </span>
                       <ChevronRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary" />
                     </div>
@@ -710,6 +723,18 @@ function CandidateDashboard() {
               icon={Upload}
               title="Upload resume"
               subtitle="PDF resume for recruiters"
+            />
+            <QuickAction
+              to="/candidate/saved-jobs"
+              icon={Bookmark}
+              title="Saved jobs"
+              subtitle="Roles you bookmarked for later"
+            />
+            <QuickAction
+              to="/candidate/notifications"
+              icon={Bell}
+              title="Notifications"
+              subtitle="Application updates and alerts"
             />
             <QuickAction to="/jobs" icon={Briefcase} title="Browse jobs" subtitle="Search and filter open roles" />
           </div>

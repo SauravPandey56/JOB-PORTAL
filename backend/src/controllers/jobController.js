@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Job } from "../models/Job.js";
 import { Application } from "../models/Application.js";
+import { User } from "../models/User.js";
 
 export async function createJob(req, res) {
   const payload = {
@@ -17,6 +18,9 @@ export async function createJob(req, res) {
     experienceLevel: req.body.experienceLevel,
     category: req.body.category,
     location: req.body.location,
+    workMode: ["onsite", "remote", "hybrid"].includes((req.body.workMode || "").toString())
+      ? req.body.workMode
+      : "onsite",
     isActive: req.body.isActive ?? true,
   };
   const job = await Job.create(payload);
@@ -40,11 +44,13 @@ export async function updateJob(req, res) {
     "experienceLevel",
     "category",
     "location",
+    "workMode",
     "isActive",
   ];
   for (const f of fields) {
     if (req.body[f] !== undefined) job[f] = req.body[f];
   }
+  if (job.workMode && !["onsite", "remote", "hybrid"].includes(job.workMode)) job.workMode = "onsite";
   if (req.body.requiredSkills !== undefined) {
     job.requiredSkills = Array.isArray(req.body.requiredSkills)
       ? req.body.requiredSkills
@@ -91,12 +97,14 @@ export async function listJobs(req, res) {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+  const workMode = (req.query.workMode || "").toString().trim().toLowerCase();
 
   const filter = { isActive: true };
   if (q) filter.$text = { $search: q };
   if (category) filter.category = category;
   if (location) filter.location = location;
   if (experience) filter.experienceLevel = experience;
+  if (["onsite", "remote", "hybrid"].includes(workMode)) filter.workMode = workMode;
   if (skills.length) filter.requiredSkills = { $all: skills };
   if (!Number.isNaN(minSalary) && minSalary !== undefined) filter.salaryMax = { $gte: minSalary };
   if (!Number.isNaN(maxSalary) && maxSalary !== undefined)
@@ -119,6 +127,33 @@ export async function listJobs(req, res) {
     pages: Math.ceil(total / limit),
     items,
   });
+}
+
+/** Personalized suggestions for candidates (skills / preferred category). */
+export async function recommendedJobs(req, res) {
+  const user = await User.findById(req.user.id).lean();
+  if (!user || user.role !== "candidate") return res.status(403).json({ message: "Forbidden" });
+
+  const filter = { isActive: true };
+  if (user.preferredCategory?.trim()) {
+    filter.category = user.preferredCategory.trim();
+  } else if (Array.isArray(user.skills) && user.skills.length) {
+    filter.requiredSkills = { $in: user.skills };
+  }
+
+  let jobs = await Job.find(filter).sort({ createdAt: -1 }).limit(16).populate("recruiterId", "name company").lean();
+
+  if (jobs.length < 8) {
+    const exclude = jobs.map((j) => j._id);
+    const more = await Job.find({ isActive: true, ...(exclude.length ? { _id: { $nin: exclude } } : {}) })
+      .sort({ createdAt: -1 })
+      .limit(16 - jobs.length)
+      .populate("recruiterId", "name company")
+      .lean();
+    jobs = [...jobs, ...more];
+  }
+
+  return res.json({ jobs });
 }
 
 export async function listRecruiterJobs(req, res) {
@@ -171,9 +206,12 @@ export async function getRecruiterDashboard(req, res) {
   const byStatus = Object.fromEntries(statusBreakdown.map((s) => [s._id, s.count]));
 
   const applied = byStatus.applied || 0;
+  const underReview = byStatus.under_review || 0;
   const shortlisted = byStatus.shortlisted || 0;
+  const interview = byStatus.interview || 0;
   const rejected = byStatus.rejected || 0;
-  const totalApplicants = applied + shortlisted + rejected;
+  const selected = byStatus.selected || 0;
+  const totalApplicants = statusBreakdown.reduce((n, s) => n + (s.count || 0), 0);
 
   const recentApplications = await Application.find({ jobId: { $in: jobIds } })
     .sort({ appliedDate: -1 })
@@ -195,15 +233,15 @@ export async function getRecruiterDashboard(req, res) {
       activeJobs,
       totalJobs: jobs.length,
       totalApplicants,
-      interviewsScheduled: shortlisted,
-      hiredCandidates: 0,
+      interviewsScheduled: interview + shortlisted,
+      hiredCandidates: selected,
     },
     pipeline: {
       applied,
-      screening: 0,
-      interview: shortlisted,
-      offer: 0,
-      hired: 0,
+      screening: underReview,
+      interview,
+      offer: shortlisted,
+      hired: selected,
     },
     recentApplications,
   });

@@ -16,6 +16,12 @@ const jobSchema = new mongoose.Schema(
     experienceLevel: { type: String, trim: true }, // e.g. "0-1", "2-4", "5+"
     category: { type: String, trim: true, index: true },
     location: { type: String, trim: true, index: true },
+    workMode: {
+      type: String,
+      enum: ["onsite", "remote", "hybrid"],
+      default: "onsite",
+      index: true,
+    },
     isActive: { type: Boolean, default: true, index: true },
     isFlagged: { type: Boolean, default: false, index: true },
   },

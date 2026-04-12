@@ -1,5 +1,5 @@
-import { useId, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useId, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
 import { useAuth } from "../state/AuthContext.jsx";
 import {
@@ -19,6 +19,7 @@ function apiErrorMessage(err) {
 export default function Register() {
   const { register } = useAuth();
   const nav = useNavigate();
+  const [searchParams] = useSearchParams();
   const roleId = useId();
   const nameId = useId();
   const emailId = useId();
@@ -30,6 +31,11 @@ export default function Register() {
   const companyDescId = useId();
 
   const [role, setRole] = useState("candidate");
+
+  useEffect(() => {
+    const intent = (searchParams.get("intent") || "").toLowerCase();
+    if (intent === "recruiter") setRole("recruiter");
+  }, [searchParams]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

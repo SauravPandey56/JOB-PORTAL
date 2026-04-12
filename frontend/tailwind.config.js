@@ -5,9 +5,9 @@ export default {
     extend: {
       colors: {
         primary: "#2563EB",
-        accent: "#3B82F6",
-        dark: "#0F172A",
-        surface: "#F8FAFC",
+        accent: "#22C55E",
+        dark: "#111827",
+        surface: "#F9FAFB",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "Segoe UI", "Roboto", "sans-serif"],

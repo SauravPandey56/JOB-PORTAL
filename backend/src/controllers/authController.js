@@ -14,6 +14,7 @@ function pickPublicUser(u) {
     resume: u.resume ?? null,
     company: u.company ?? null,
     createdAt: u.createdAt,
+    savedJobsCount: Array.isArray(u.savedJobs) ? u.savedJobs.length : 0,
   };
 }
 

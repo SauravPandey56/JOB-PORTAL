@@ -131,6 +131,26 @@ export default function ProfileMenu() {
               My Applications
             </NavLink>
           ) : null}
+          {user.role === "candidate" ? (
+            <NavLink
+              to="/candidate/saved-jobs"
+              role="menuitem"
+              className={itemClass}
+              onClick={() => setOpen(false)}
+            >
+              Saved jobs
+            </NavLink>
+          ) : null}
+          {user.role === "candidate" ? (
+            <NavLink
+              to="/candidate/notifications"
+              role="menuitem"
+              className={itemClass}
+              onClick={() => setOpen(false)}
+            >
+              Notifications
+            </NavLink>
+          ) : null}
           {user.role === "recruiter" || user.role === "admin" ? (
             <NavLink to="/recruiter/jobs" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
               My Jobs

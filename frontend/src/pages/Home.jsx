@@ -74,7 +74,7 @@ function HowItWorksSignup() {
             Secure password
           </div>
         </div>
-        <span className="mt-6 flex min-h-[2.75rem] w-full items-center justify-center rounded-xl bg-primary text-small font-semibold text-white transition group-hover:bg-accent">
+        <span className="mt-6 flex min-h-[2.75rem] w-full items-center justify-center rounded-xl bg-primary text-small font-semibold text-white transition group-hover:bg-blue-700">
           Open sign up
         </span>
       </div>
@@ -140,7 +140,7 @@ function HowItWorksFind({ categories }) {
           />
           <button
             type="button"
-            className="absolute right-1.5 top-1/2 min-h-[2.25rem] -translate-y-1/2 rounded-lg bg-primary px-3 text-xs font-semibold text-white transition hover:bg-accent"
+            className="absolute right-1.5 top-1/2 min-h-[2.25rem] -translate-y-1/2 rounded-lg bg-primary px-3 text-xs font-semibold text-white transition hover:bg-blue-700"
             onClick={() => (q.trim() ? pick(q.trim()) : setOpen((o) => !o))}
           >
             Go
@@ -201,7 +201,7 @@ function HowItWorksApply({ ctaTo, ctaLabel, lines, title, subtitle }) {
             </div>
           ))}
         </div>
-        <span className="mt-6 flex min-h-[2.75rem] w-full items-center justify-center rounded-xl bg-primary text-small font-semibold text-white transition group-hover:bg-accent">
+        <span className="mt-6 flex min-h-[2.75rem] w-full items-center justify-center rounded-xl bg-primary text-small font-semibold text-white transition group-hover:bg-blue-700">
           {ctaLabel}
         </span>
       </div>
@@ -215,6 +215,7 @@ export default function Home() {
   const [popularJobs, setPopularJobs] = useState(["Designer", "Web Developer", "Software Engineer"]);
   const [jobStats, setJobStats] = useState(null);
   const [heroQuery, setHeroQuery] = useState("");
+  const [heroLocation, setHeroLocation] = useState("");
   const [featuredJobs, setFeaturedJobs] = useState([]);
   const [jobsTotal, setJobsTotal] = useState(0);
   const [categories, setCategories] = useState([]);
@@ -247,10 +248,29 @@ export default function Home() {
   const submitHeroSearch = (e) => {
     e.preventDefault();
     const q = heroQuery.trim();
+    const loc = heroLocation.trim();
     const params = new URLSearchParams();
     if (q) params.set("q", q);
+    if (loc) params.set("location", loc);
     nav(params.toString() ? `/jobs?${params.toString()}` : "/jobs");
   };
+
+  const topCompanies = useMemo(() => {
+    const out = [];
+    const seen = new Set();
+    for (const j of featuredJobs) {
+      const name = j?.recruiterId?.company?.name || j?.recruiterId?.name;
+      if (!name || seen.has(name)) continue;
+      seen.add(name);
+      out.push({
+        id: String(j?.recruiterId?._id || name),
+        name,
+        logo: j?.recruiterId?.company?.logoUrl || j?.recruiterId?.avatarUrl || j?.recruiterId?.image,
+      });
+      if (out.length >= 8) break;
+    }
+    return out;
+  }, [featuredJobs]);
 
   const onFeedbackSubmit = async (e) => {
     e.preventDefault();
@@ -292,7 +312,7 @@ export default function Home() {
         : {
             title: "Apply in one place",
             subtitle: "Track every application",
-            lines: ["Apply from any job page when signed in", "Shortlisted and rejected in one list"],
+            lines: ["Apply from any job page when signed in", "Track applied, review, interview, and outcomes"],
             ctaTo: "/candidate/applications",
             ctaLabel: "View my applications",
           };
@@ -313,13 +333,11 @@ export default function Home() {
                 <OrbitLogo size={64} className="hero-in hero-in-1 mt-1" />
                 <div className="min-w-0 flex-1 space-y-5">
                   <h1 className="hero-in hero-in-2 text-h1 text-dark sm:text-[48px]">
-                    The modern way to
-                    <br />
-                    hire and get hired
+                    Find Your Dream Job Today
                   </h1>
                   <p className="hero-in hero-in-3 max-w-xl text-body text-slate-600">
-                    Search curated roles, manage applications in one dashboard, and keep hiring human—with tools built
-                    for candidates, recruiters, and teams.
+                    Search roles by title and city, save jobs you love, and track every application in one clean
+                    workspace—built for candidates and hiring teams.
                   </p>
                 </div>
               </div>
@@ -330,9 +348,9 @@ export default function Home() {
                 role="search"
                 aria-label="Search jobs"
               >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch">
                   <label htmlFor="hero-job-search" className="sr-only">
-                    Keywords, title, or company
+                    Job title, skill, or company
                   </label>
                   <input
                     id="hero-job-search"
@@ -340,13 +358,24 @@ export default function Home() {
                     onChange={(e) => setHeroQuery(e.target.value)}
                     placeholder="Job title, skill, or company"
                     autoComplete="off"
-                    className="input-field min-h-[3rem] flex-1 border-0 bg-transparent shadow-none focus:ring-0"
+                    className="input-field min-h-[3rem] flex-1 min-w-[12rem] border-0 bg-transparent shadow-none focus:ring-0"
+                  />
+                  <label htmlFor="hero-location" className="sr-only">
+                    Location
+                  </label>
+                  <input
+                    id="hero-location"
+                    value={heroLocation}
+                    onChange={(e) => setHeroLocation(e.target.value)}
+                    placeholder="Location"
+                    autoComplete="off"
+                    className="input-field min-h-[3rem] flex-1 min-w-[10rem] border-0 border-t border-slate-100 bg-transparent shadow-none focus:ring-0 sm:border-l sm:border-t-0 sm:pl-4"
                   />
                   <button
                     type="submit"
-                    className="min-h-[3rem] shrink-0 rounded-xl bg-primary px-8 text-small font-semibold text-white shadow-md transition hover:bg-accent hover:shadow-lg active:scale-[0.98]"
+                    className="min-h-[3rem] shrink-0 rounded-xl bg-primary px-8 text-small font-semibold text-white shadow-md transition hover:bg-blue-700 hover:shadow-lg active:scale-[0.98] sm:ml-auto"
                   >
-                    Search jobs
+                    Search
                   </button>
                 </div>
               </form>
@@ -410,7 +439,7 @@ export default function Home() {
 
       <Section id="categories" className="relative z-[1]">
         <div className="mx-auto max-w-6xl px-4">
-          <h2 className="text-h2 text-dark">Job categories</h2>
+          <h2 className="text-h2 text-dark">Popular job categories</h2>
           <p className="mt-2 max-w-2xl text-body text-slate-600">Explore openings grouped by what teams are hiring for right now.</p>
           <div className="mt-8 flex flex-wrap gap-6">
             {(categories.length ? categories : ["Engineering", "Design", "Product", "Data", "Sales", "Marketing"]).map(
@@ -424,6 +453,50 @@ export default function Home() {
                 </Link>
               )
             )}
+          </div>
+        </div>
+      </Section>
+
+      <Section id="companies" className="relative z-[1]">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <h2 className="text-h2 text-dark">Top hiring companies</h2>
+              <p className="mt-2 text-body text-slate-600">Brands actively listing roles on TalentOrbit right now.</p>
+            </div>
+            <Link
+              to="/jobs"
+              className="btn-secondary w-full shrink-0 transition hover:-translate-y-0.5 hover:shadow-md sm:w-auto"
+            >
+              Browse all listings
+            </Link>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {(topCompanies.length ? topCompanies : ["Google", "Microsoft", "Amazon", "Adobe"]).map((c) => {
+              const name = typeof c === "string" ? c : c.name;
+              const key = typeof c === "string" ? c : c.id;
+              const logo = typeof c === "string" ? null : c.logo;
+              return (
+                <div
+                  key={key}
+                  className="card-surface home-card flex items-center gap-4 rounded-2xl border border-slate-200/90 p-5"
+                >
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50 text-sm font-bold text-primary">
+                    {logo ? (
+                      <img src={logo} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      name.slice(0, 2).toUpperCase()
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-dark">{name}</p>
+                    <Link to={`/jobs?q=${encodeURIComponent(name)}`} className="mt-1 text-xs font-semibold text-primary hover:underline">
+                      View jobs
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </Section>
@@ -460,7 +533,7 @@ export default function Home() {
                     <p className="mt-3 text-small font-medium text-primary">{formatSalary(job)}</p>
                     <Link
                       to={`/jobs/${job._id}`}
-                      className="mt-auto inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-primary px-4 text-small font-semibold text-white shadow-sm transition hover:bg-accent hover:shadow-md active:scale-[0.98]"
+                      className="mt-auto inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-primary px-4 text-small font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md active:scale-[0.98]"
                     >
                       Apply
                     </Link>

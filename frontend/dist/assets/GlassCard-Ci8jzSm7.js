@@ -1,0 +1,1 @@
+import{j as a}from"./index-sCEUSRJn.js";function d({className:r="",children:o}){return a.jsx("div",{className:["rounded-2xl border border-slate-200/90 bg-white shadow-card backdrop-blur-sm transition duration-300 hover:border-primary/15 hover:shadow-card-hover",r].join(" "),children:o})}export{d as G};

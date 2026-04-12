@@ -60,6 +60,15 @@ export default function Navbar() {
             <NavLink to="/jobs" className={navLinkClass}>
               Jobs
             </NavLink>
+            <a href="/#companies" className={linkBase + " text-slate-600 hover:bg-slate-100 hover:text-dark"}>
+              Companies
+            </a>
+            <Link
+              to="/register?intent=recruiter"
+              className={linkBase + " text-slate-600 hover:bg-slate-100 hover:text-dark"}
+            >
+              For recruiters
+            </Link>
 
             {!isAuthed ? (
               <>
@@ -71,7 +80,7 @@ export default function Navbar() {
                   className={({ isActive }) =>
                     [
                       linkBase,
-                      "ml-1 bg-primary text-white shadow-md hover:bg-accent",
+                      "ml-1 bg-primary text-white shadow-md hover:bg-blue-700",
                       isActive ? "ring-2 ring-primary/40" : "",
                     ].join(" ")
                   }
@@ -117,6 +126,12 @@ export default function Navbar() {
           <NavLink to="/jobs" className={navLinkClassBlock}>
             Jobs
           </NavLink>
+          <a href="/#companies" className={navLinkClassBlock({ isActive: false })}>
+            Companies
+          </a>
+          <Link to="/register?intent=recruiter" className={navLinkClassBlock({ isActive: false })}>
+            For recruiters
+          </Link>
           {!isAuthed ? (
             <>
               <NavLink to="/login" className={navLinkClassBlock}>

@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Application } from "../models/Application.js";
 import { Job } from "../models/Job.js";
+import { Notification } from "../models/Notification.js";
 import { APPLICATION_STATUS } from "../utils/constants.js";
 
 export async function applyToJob(req, res) {
@@ -20,6 +21,18 @@ export async function applyToJob(req, res) {
   });
 
   if (!application) return res.status(409).json({ message: "Already applied" });
+
+  try {
+    await Notification.create({
+      userId: req.user.id,
+      title: "Application sent",
+      body: `You applied to ${job.title}.`,
+      type: "application",
+    });
+  } catch {
+    /* non-fatal */
+  }
+
   return res.status(201).json({ application });
 }
 
@@ -28,7 +41,7 @@ export async function myApplications(req, res) {
     .sort({ appliedDate: -1 })
     .populate({
       path: "jobId",
-      select: "title category location salaryMin salaryMax recruiterId",
+      select: "title category location salaryMin salaryMax recruiterId workMode",
       populate: { path: "recruiterId", select: "name company" },
     })
     .lean();
@@ -68,6 +81,18 @@ export async function updateApplicationStatus(req, res) {
 
   app.status = status;
   await app.save();
+
+  try {
+    await Notification.create({
+      userId: app.candidateId,
+      title: "Application update",
+      body: `Your application status is now “${status.replaceAll("_", " ")}”.`,
+      type: "application",
+    });
+  } catch {
+    /* non-fatal */
+  }
+
   return res.json({ application: app });
 }
 

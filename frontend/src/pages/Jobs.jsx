@@ -1,43 +1,43 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
+import JobCard from "../components/jobs/JobCard.jsx";
+import FilterPanel from "../components/jobs/FilterPanel.jsx";
+import JobListSkeleton from "../components/jobs/JobListSkeleton.jsx";
 import { api } from "../utils/api.js";
-
-function pill(text) {
-  return (
-    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-700">
-      {text}
-    </span>
-  );
-}
-
-function JobCardSkeleton() {
-  return (
-    <GlassCard className="animate-pulse p-5">
-      <div className="h-5 w-[60%] rounded-lg bg-slate-100" />
-      <div className="mt-3 h-3 w-[40%] rounded bg-slate-100" />
-      <div className="mt-4 flex flex-wrap gap-2">
-        <div className="h-6 w-16 rounded-full bg-slate-100" />
-        <div className="h-6 w-20 rounded-full bg-slate-100" />
-      </div>
-    </GlassCard>
-  );
-}
+import { useAuth } from "../state/AuthContext.jsx";
+import toast from "react-hot-toast";
 
 export default function Jobs() {
+  const { isAuthed, user } = useAuth();
   const [sp, setSp] = useSearchParams();
   const [data, setData] = useState({ items: [], page: 1, pages: 1, total: 0, limit: 10 });
   const [loading, setLoading] = useState(true);
+  const [savedSet, setSavedSet] = useState(() => new Set());
 
   const q = sp.get("q") || "";
   const skills = sp.get("skills") || "";
   const category = sp.get("category") || "";
   const location = sp.get("location") || "";
+  const experience = sp.get("experience") || "";
+  const minSalary = sp.get("minSalary") || "";
+  const maxSalary = sp.get("maxSalary") || "";
+  const workMode = sp.get("workMode") || "";
   const page = Number(sp.get("page") || "1");
 
   const query = useMemo(
-    () => ({ q, skills, category, location, page }),
-    [q, skills, category, location, page]
+    () => ({
+      q,
+      skills,
+      category,
+      location,
+      experience,
+      minSalary: minSalary || undefined,
+      maxSalary: maxSalary || undefined,
+      workMode: workMode || undefined,
+      page,
+    }),
+    [q, skills, category, location, experience, minSalary, maxSalary, workMode, page]
   );
 
   useEffect(() => {
@@ -55,6 +55,21 @@ export default function Jobs() {
     };
   }, [query]);
 
+  const loadSaved = useCallback(async () => {
+    if (!isAuthed || user?.role !== "candidate") return;
+    try {
+      const res = await api.get("/users/me/saved-jobs");
+      const ids = new Set((res.data.jobs || []).map((j) => String(j._id)));
+      setSavedSet(ids);
+    } catch {
+      /* ignore */
+    }
+  }, [isAuthed, user?.role]);
+
+  useEffect(() => {
+    loadSaved();
+  }, [loadSaved]);
+
   const updateParam = (k, v) => {
     const next = new URLSearchParams(sp);
     if (!v) next.delete(k);
@@ -63,159 +78,119 @@ export default function Jobs() {
     setSp(next);
   };
 
+  const toggleSave = async (jobId, currentlySaved) => {
+    if (!isAuthed || user?.role !== "candidate") {
+      toast.error("Sign in as a candidate to save jobs");
+      return;
+    }
+    try {
+      if (currentlySaved) {
+        await api.delete(`/users/me/saved-jobs/${jobId}`);
+        setSavedSet((prev) => {
+          const n = new Set(prev);
+          n.delete(String(jobId));
+          return n;
+        });
+        toast.success("Removed from saved");
+      } else {
+        await api.post(`/users/me/saved-jobs/${jobId}`);
+        setSavedSet((prev) => new Set(prev).add(String(jobId)));
+        toast.success("Saved");
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Could not update");
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="text-h2 text-dark">Browse jobs</h1>
-          <p className="mt-2 max-w-xl text-body text-slate-600">
-            Refine by keywords, skills, category, or location. Results update as you type.
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <label htmlFor="jobs-filter-q" className="mb-1 block text-small font-medium uppercase tracking-wide text-slate-500">
-            Search
-          </label>
-          <input
-            id="jobs-filter-q"
-            className="input-field"
-            placeholder="Title, description, location"
-            value={q}
-            onChange={(e) => updateParam("q", e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="jobs-filter-skills" className="mb-1 block text-small font-medium uppercase tracking-wide text-slate-500">
-            Skills
-          </label>
-          <input
-            id="jobs-filter-skills"
-            className="input-field"
-            placeholder="e.g. react, node"
-            value={skills}
-            onChange={(e) => updateParam("skills", e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="jobs-filter-category" className="mb-1 block text-small font-medium uppercase tracking-wide text-slate-500">
-            Category
-          </label>
-          <input
-            id="jobs-filter-category"
-            className="input-field"
-            placeholder="Engineering, Sales…"
-            value={category}
-            onChange={(e) => updateParam("category", e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="jobs-filter-location" className="mb-1 block text-small font-medium uppercase tracking-wide text-slate-500">
-            Location
-          </label>
-          <input
-            id="jobs-filter-location"
-            className="input-field"
-            placeholder="City or remote"
-            value={location}
-            onChange={(e) => updateParam("location", e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="mt-10 grid gap-6 md:grid-cols-2">
-        {loading ? (
-          <>
-            <JobCardSkeleton />
-            <JobCardSkeleton />
-            <JobCardSkeleton />
-            <JobCardSkeleton />
-          </>
-        ) : data.items.length === 0 ? (
-          <GlassCard className="p-8 text-center md:col-span-2">
-            <p className="text-body font-semibold text-dark">No jobs match your filters</p>
-            <p className="mt-2 text-small text-slate-600">Try clearing a field or using broader keywords.</p>
-            <button
-              type="button"
-              onClick={() => setSp(new URLSearchParams())}
-              className="btn-secondary mt-6 w-full max-w-xs"
-            >
-              Clear all filters
-            </button>
-          </GlassCard>
-        ) : (
-          data.items.map((job) => (
-            <GlassCard key={job._id} className="p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <h2 className="text-h3 text-dark">{job.title}</h2>
-                  <p className="mt-1 text-small text-slate-600">
-                    {job.recruiterId?.company?.name || job.recruiterId?.name || "Recruiter"} ·{" "}
-                    {job.location || "Remote"}
-                  </p>
-                </div>
-                <Link
-                  to={`/jobs/${job._id}`}
-                  className="shrink-0 rounded-xl border border-slate-200 bg-white px-4 py-2 text-small font-semibold text-primary shadow-sm transition hover:border-primary/30 hover:bg-primary/5"
-                >
-                  View role
-                </Link>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                {job.category ? pill(job.category) : null}
-                {job.experienceLevel ? pill(job.experienceLevel) : null}
-                {job.salaryMax ? pill(`₹${job.salaryMin || 0} – ₹${job.salaryMax}`) : null}
-              </div>
-
-              {job.requiredSkills?.length ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {job.requiredSkills.slice(0, 6).map((s) => pill(s))}
-                </div>
-              ) : null}
-            </GlassCard>
-          ))
-        )}
-      </div>
-
-      <div className="mt-10 flex flex-col gap-4 border-t border-slate-200 pt-8 text-body text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-        <p>
-          Page <span className="font-semibold text-dark">{data.page}</span> of{" "}
-          <span className="font-semibold text-dark">{data.pages}</span>
-          <span className="mx-2 text-slate-400">·</span>
-          <span className="font-semibold text-dark">{data.total}</span> jobs
+    <div className="mx-auto max-w-7xl px-4 py-8 md:py-10">
+      <div className="mb-8">
+        <h1 className="text-h2 text-dark">Browse jobs</h1>
+        <p className="mt-2 max-w-2xl text-body text-slate-600">
+          Filter by location, experience, salary, and work mode — curated roles from verified recruiters.
         </p>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            disabled={data.page <= 1}
-            onClick={() =>
-              setSp((prev) => {
-                const next = new URLSearchParams(prev);
-                next.set("page", String(Math.max(1, data.page - 1)));
-                return next;
-              })
-            }
-            className="btn-secondary min-h-[2.75rem] px-4 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            disabled={data.page >= data.pages}
-            onClick={() =>
-              setSp((prev) => {
-                const next = new URLSearchParams(prev);
-                next.set("page", String(Math.min(data.pages, data.page + 1)));
-                return next;
-              })
-            }
-            className="btn-secondary min-h-[2.75rem] px-4 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Next
-          </button>
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+        <aside className="lg:sticky lg:top-24 lg:self-start">
+          <FilterPanel
+            q={q}
+            location={location}
+            skills={skills}
+            category={category}
+            experience={experience}
+            minSalary={minSalary}
+            maxSalary={maxSalary}
+            workMode={workMode}
+            onChange={updateParam}
+          />
+        </aside>
+
+        <div>
+          {loading ? (
+            <div className="grid gap-5 sm:grid-cols-2">
+              <JobListSkeleton count={6} />
+            </div>
+          ) : data.items.length === 0 ? (
+            <GlassCard className="p-10 text-center">
+              <p className="text-body font-semibold text-dark">No jobs match your filters</p>
+              <p className="mt-2 text-small text-slate-600">Try clearing filters or broadening keywords.</p>
+              <button type="button" onClick={() => setSp(new URLSearchParams())} className="btn-secondary mx-auto mt-6 max-w-xs">
+                Clear all filters
+              </button>
+            </GlassCard>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2">
+              {data.items.map((job) => (
+                <JobCard
+                  key={job._id}
+                  job={job}
+                  showSave={isAuthed && user?.role === "candidate"}
+                  saved={savedSet.has(String(job._id))}
+                  onToggleSave={toggleSave}
+                />
+              ))}
+            </div>
+          )}
+
+          <div className="mt-10 flex flex-col gap-4 border-t border-slate-200 pt-8 text-body text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              Page <span className="font-semibold text-dark">{data.page}</span> of{" "}
+              <span className="font-semibold text-dark">{data.pages}</span>
+              <span className="mx-2 text-slate-400">·</span>
+              <span className="font-semibold text-dark">{data.total}</span> jobs
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={data.page <= 1}
+                onClick={() =>
+                  setSp((prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.set("page", String(Math.max(1, data.page - 1)));
+                    return next;
+                  })
+                }
+                className="btn-secondary min-h-[2.75rem] px-4 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                disabled={data.page >= data.pages}
+                onClick={() =>
+                  setSp((prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.set("page", String(Math.min(data.pages, data.page + 1)));
+                    return next;
+                  })
+                }
+                className="btn-secondary min-h-[2.75rem] px-4 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

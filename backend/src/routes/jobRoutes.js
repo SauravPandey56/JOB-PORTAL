@@ -9,11 +9,13 @@ import {
   getJob,
   listRecruiterJobs,
   getRecruiterDashboard,
+  recommendedJobs,
 } from "../controllers/jobController.js";
 
 const router = express.Router();
 
 router.get("/", listJobs);
+router.get("/recommended", protect, requireRole("candidate"), recommendedJobs);
 router.get("/mine/dashboard", protect, requireRole("recruiter", "admin"), getRecruiterDashboard);
 router.get("/mine", protect, requireRole("recruiter", "admin"), listRecruiterJobs);
 router.get("/:id", getJob);
