@@ -78,7 +78,7 @@ export default function CandidateProfile() {
         </form>
       </GlassCard>
 
-      <GlassCard className="p-6">
+      <GlassCard className="p-6" id="resume-upload">
         <h3 className="font-medium">Resume</h3>
         <p className="mt-1 text-sm text-slate-200">
           Current:{" "}

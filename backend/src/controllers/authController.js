@@ -42,6 +42,7 @@ export async function register(req, res) {
     email,
     passwordHash,
     role,
+    recruiterVerified: role === "recruiter" ? false : true,
     skills: Array.isArray(skills)
       ? skills
       : typeof skills === "string" && skills.length
@@ -65,11 +66,21 @@ export async function login(req, res) {
 
   const { email, password } = req.body;
   const user = await User.findOne({ email: email.toLowerCase().trim() }).select("+passwordHash");
-  if (!user) return res.status(401).json({ message: "Invalid credentials" });
+  if (!user) {
+    return res.status(401).json({
+      code: "ACCOUNT_NOT_FOUND",
+      message: "Account not found. Please create an account first.",
+    });
+  }
   if (user.isBlocked) return res.status(403).json({ message: "User is blocked" });
 
   const ok = await user.verifyPassword(password);
-  if (!ok) return res.status(401).json({ message: "Invalid credentials" });
+  if (!ok) {
+    return res.status(401).json({
+      code: "INVALID_CREDENTIALS",
+      message: "Incorrect email or password.",
+    });
+  }
 
   const token = signAccessToken(user);
   return res.json({ token, user: pickPublicUser(user) });

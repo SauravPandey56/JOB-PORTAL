@@ -17,6 +17,7 @@ const jobSchema = new mongoose.Schema(
     category: { type: String, trim: true, index: true },
     location: { type: String, trim: true, index: true },
     isActive: { type: Boolean, default: true, index: true },
+    isFlagged: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );

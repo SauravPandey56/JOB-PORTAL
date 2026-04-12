@@ -127,3 +127,85 @@ export async function listRecruiterJobs(req, res) {
   return res.json({ jobs });
 }
 
+/**
+ * Aggregated metrics, pipeline counts, and recent applications for recruiter dashboard UI.
+ */
+export async function getRecruiterDashboard(req, res) {
+  const recruiterId = req.user.id;
+  const jobs = await Job.find({ recruiterId }).sort({ createdAt: -1 }).lean();
+  const jobIds = jobs.map((j) => j._id);
+
+  if (jobIds.length === 0) {
+    return res.json({
+      jobs: [],
+      stats: {
+        activeJobs: 0,
+        totalJobs: 0,
+        totalApplicants: 0,
+        interviewsScheduled: 0,
+        hiredCandidates: 0,
+      },
+      pipeline: {
+        applied: 0,
+        screening: 0,
+        interview: 0,
+        offer: 0,
+        hired: 0,
+      },
+      recentApplications: [],
+    });
+  }
+
+  const [countsByJob, statusBreakdown] = await Promise.all([
+    Application.aggregate([
+      { $match: { jobId: { $in: jobIds } } },
+      { $group: { _id: "$jobId", count: { $sum: 1 } } },
+    ]),
+    Application.aggregate([
+      { $match: { jobId: { $in: jobIds } } },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]),
+  ]);
+
+  const countMap = Object.fromEntries(countsByJob.map((c) => [String(c._id), c.count]));
+  const byStatus = Object.fromEntries(statusBreakdown.map((s) => [s._id, s.count]));
+
+  const applied = byStatus.applied || 0;
+  const shortlisted = byStatus.shortlisted || 0;
+  const rejected = byStatus.rejected || 0;
+  const totalApplicants = applied + shortlisted + rejected;
+
+  const recentApplications = await Application.find({ jobId: { $in: jobIds } })
+    .sort({ appliedDate: -1 })
+    .limit(10)
+    .populate("candidateId", "name email skills qualification resume")
+    .populate("jobId", "title isActive")
+    .lean();
+
+  const activeJobs = jobs.filter((j) => j.isActive).length;
+
+  const jobsWithCounts = jobs.map((j) => ({
+    ...j,
+    applicantCount: countMap[String(j._id)] || 0,
+  }));
+
+  return res.json({
+    jobs: jobsWithCounts,
+    stats: {
+      activeJobs,
+      totalJobs: jobs.length,
+      totalApplicants,
+      interviewsScheduled: shortlisted,
+      hiredCandidates: 0,
+    },
+    pipeline: {
+      applied,
+      screening: 0,
+      interview: shortlisted,
+      offer: 0,
+      hired: 0,
+    },
+    recentApplications,
+  });
+}
+

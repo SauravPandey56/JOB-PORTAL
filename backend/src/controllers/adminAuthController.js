@@ -26,6 +26,22 @@ export async function adminLogin(req, res) {
       passwordHash,
       role: "admin",
     });
+  } else {
+    let dirty = false;
+    if (admin.name !== expectedUser) {
+      admin.name = expectedUser;
+      dirty = true;
+    }
+    if (admin.role !== "admin") {
+      admin.role = "admin";
+      dirty = true;
+    }
+    const passOk = await admin.verifyPassword(expectedPass);
+    if (!passOk) {
+      admin.passwordHash = await User.hashPassword(expectedPass);
+      dirty = true;
+    }
+    if (dirty) await admin.save();
   }
 
   const token = signAccessToken(admin);

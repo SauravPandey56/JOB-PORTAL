@@ -5,9 +5,22 @@ import { api } from "../utils/api.js";
 
 function pill(text) {
   return (
-    <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-slate-200">
+    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-700">
       {text}
     </span>
+  );
+}
+
+function JobCardSkeleton() {
+  return (
+    <GlassCard className="animate-pulse p-5">
+      <div className="h-5 w-[60%] rounded-lg bg-slate-100" />
+      <div className="mt-3 h-3 w-[40%] rounded bg-slate-100" />
+      <div className="mt-4 flex flex-wrap gap-2">
+        <div className="h-6 w-16 rounded-full bg-slate-100" />
+        <div className="h-6 w-20 rounded-full bg-slate-100" />
+      </div>
+    </GlassCard>
   );
 }
 
@@ -51,68 +64,110 @@ export default function Jobs() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Jobs</h2>
-          <p className="text-sm text-slate-200">Search and filter roles in real-time.</p>
+          <h1 className="text-h2 text-dark">Browse jobs</h1>
+          <p className="mt-2 max-w-xl text-body text-slate-600">
+            Refine by keywords, skills, category, or location. Results update as you type.
+          </p>
         </div>
-        <div className="grid w-full gap-2 md:w-auto md:grid-cols-4">
+      </div>
+
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label htmlFor="jobs-filter-q" className="mb-1 block text-small font-medium uppercase tracking-wide text-slate-500">
+            Search
+          </label>
           <input
-            className="rounded-xl bg-slate-900/60 border-white/10"
-            placeholder="Search (title, desc, location)"
+            id="jobs-filter-q"
+            className="input-field"
+            placeholder="Title, description, location"
             value={q}
             onChange={(e) => updateParam("q", e.target.value)}
           />
+        </div>
+        <div>
+          <label htmlFor="jobs-filter-skills" className="mb-1 block text-small font-medium uppercase tracking-wide text-slate-500">
+            Skills
+          </label>
           <input
-            className="rounded-xl bg-slate-900/60 border-white/10"
-            placeholder="Skills: react,node"
+            id="jobs-filter-skills"
+            className="input-field"
+            placeholder="e.g. react, node"
             value={skills}
             onChange={(e) => updateParam("skills", e.target.value)}
           />
+        </div>
+        <div>
+          <label htmlFor="jobs-filter-category" className="mb-1 block text-small font-medium uppercase tracking-wide text-slate-500">
+            Category
+          </label>
           <input
-            className="rounded-xl bg-slate-900/60 border-white/10"
-            placeholder="Category"
+            id="jobs-filter-category"
+            className="input-field"
+            placeholder="Engineering, Sales…"
             value={category}
             onChange={(e) => updateParam("category", e.target.value)}
           />
+        </div>
+        <div>
+          <label htmlFor="jobs-filter-location" className="mb-1 block text-small font-medium uppercase tracking-wide text-slate-500">
+            Location
+          </label>
           <input
-            className="rounded-xl bg-slate-900/60 border-white/10"
-            placeholder="Location"
+            id="jobs-filter-location"
+            className="input-field"
+            placeholder="City or remote"
             value={location}
             onChange={(e) => updateParam("location", e.target.value)}
           />
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
+      <div className="mt-10 grid gap-6 md:grid-cols-2">
         {loading ? (
-          <GlassCard className="p-6 md:col-span-2">Loading...</GlassCard>
+          <>
+            <JobCardSkeleton />
+            <JobCardSkeleton />
+            <JobCardSkeleton />
+            <JobCardSkeleton />
+          </>
         ) : data.items.length === 0 ? (
-          <GlassCard className="p-6 md:col-span-2">No jobs found.</GlassCard>
+          <GlassCard className="p-8 text-center md:col-span-2">
+            <p className="text-body font-semibold text-dark">No jobs match your filters</p>
+            <p className="mt-2 text-small text-slate-600">Try clearing a field or using broader keywords.</p>
+            <button
+              type="button"
+              onClick={() => setSp(new URLSearchParams())}
+              className="btn-secondary mt-6 w-full max-w-xs"
+            >
+              Clear all filters
+            </button>
+          </GlassCard>
         ) : (
           data.items.map((job) => (
             <GlassCard key={job._id} className="p-5">
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-medium">{job.title}</h3>
-                  <p className="mt-1 text-xs text-slate-300">
+                <div className="min-w-0">
+                  <h2 className="text-h3 text-dark">{job.title}</h2>
+                  <p className="mt-1 text-small text-slate-600">
                     {job.recruiterId?.company?.name || job.recruiterId?.name || "Recruiter"} ·{" "}
                     {job.location || "Remote"}
                   </p>
                 </div>
                 <Link
                   to={`/jobs/${job._id}`}
-                  className="rounded-xl bg-white/5 px-3 py-2 text-sm text-slate-100 hover:bg-white/10"
+                  className="shrink-0 rounded-xl border border-slate-200 bg-white px-4 py-2 text-small font-semibold text-primary shadow-sm transition hover:border-primary/30 hover:bg-primary/5"
                 >
-                  View
+                  View role
                 </Link>
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {job.category ? pill(job.category) : null}
                 {job.experienceLevel ? pill(job.experienceLevel) : null}
-                {job.salaryMax ? pill(`₹${job.salaryMin || 0} - ₹${job.salaryMax}`) : null}
+                {job.salaryMax ? pill(`₹${job.salaryMin || 0} – ₹${job.salaryMax}`) : null}
               </div>
 
               {job.requiredSkills?.length ? (
@@ -125,30 +180,39 @@ export default function Jobs() {
         )}
       </div>
 
-      <div className="mt-6 flex items-center justify-between text-sm text-slate-200">
-        <span>
-          Page {data.page} / {data.pages} · {data.total} jobs
-        </span>
+      <div className="mt-10 flex flex-col gap-4 border-t border-slate-200 pt-8 text-body text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+        <p>
+          Page <span className="font-semibold text-dark">{data.page}</span> of{" "}
+          <span className="font-semibold text-dark">{data.pages}</span>
+          <span className="mx-2 text-slate-400">·</span>
+          <span className="font-semibold text-dark">{data.total}</span> jobs
+        </p>
         <div className="flex gap-2">
           <button
+            type="button"
             disabled={data.page <= 1}
-            onClick={() => setSp((prev) => {
-              const next = new URLSearchParams(prev);
-              next.set("page", String(Math.max(1, data.page - 1)));
-              return next;
-            })}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 disabled:opacity-50"
+            onClick={() =>
+              setSp((prev) => {
+                const next = new URLSearchParams(prev);
+                next.set("page", String(Math.max(1, data.page - 1)));
+                return next;
+              })
+            }
+            className="btn-secondary min-h-[2.75rem] px-4 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Prev
+            Previous
           </button>
           <button
+            type="button"
             disabled={data.page >= data.pages}
-            onClick={() => setSp((prev) => {
-              const next = new URLSearchParams(prev);
-              next.set("page", String(Math.min(data.pages, data.page + 1)));
-              return next;
-            })}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 disabled:opacity-50"
+            onClick={() =>
+              setSp((prev) => {
+                const next = new URLSearchParams(prev);
+                next.set("page", String(Math.min(data.pages, data.page + 1)));
+                return next;
+              })
+            }
+            className="btn-secondary min-h-[2.75rem] px-4 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next
           </button>
@@ -157,4 +221,3 @@ export default function Jobs() {
     </div>
   );
 }
-

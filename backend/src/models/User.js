@@ -44,6 +44,10 @@ const userSchema = new mongoose.Schema(
     company: recruiterCompanySchema,
 
     isBlocked: { type: Boolean, default: false, index: true },
+    /** Recruiters pending admin verification; true/undefined = verified for legacy users */
+    recruiterVerified: { type: Boolean, default: true, index: true },
+    /** Moderation queue for reported accounts (non-admin) */
+    moderationFlagged: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );

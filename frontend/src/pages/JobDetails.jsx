@@ -58,23 +58,20 @@ export default function JobDetails() {
       <GlassCard className="p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold">{job.title}</h2>
-            <p className="mt-1 text-sm text-slate-200">
+            <h2 className="text-h2 text-dark">{job.title}</h2>
+            <p className="mt-1 text-small text-slate-600">
               {job.recruiterId?.company?.name || job.recruiterId?.name || "Recruiter"} ·{" "}
               {job.location || "Remote"}
             </p>
           </div>
-          <Link
-            to="/jobs"
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
-          >
+          <Link to="/jobs" className="btn-secondary min-h-[2.5rem] px-4 py-2 text-small">
             Back
           </Link>
         </div>
 
-        <div className="mt-4 whitespace-pre-wrap text-sm text-slate-100">{job.description}</div>
+        <div className="mt-4 whitespace-pre-wrap text-body text-slate-700">{job.description}</div>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 text-sm text-slate-200">
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 text-small text-slate-600">
           <div>Category: {job.category || "-"}</div>
           <div>Experience: {job.experienceLevel || "-"}</div>
           <div>
@@ -89,7 +86,7 @@ export default function JobDetails() {
             <Link
               to="/login"
               state={{ from: `/jobs/${id}` }}
-              className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400"
+              className="inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-primary px-5 text-small font-semibold text-white transition hover:bg-accent"
             >
               Login to apply
             </Link>
@@ -97,12 +94,12 @@ export default function JobDetails() {
             <button
               disabled={busy}
               onClick={apply}
-              className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400 disabled:opacity-50"
+              className="inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-primary px-5 text-small font-semibold text-white transition hover:bg-accent disabled:opacity-50"
             >
-              {busy ? "Applying..." : "Apply now"}
+              {busy ? "Applying…" : "Apply now"}
             </button>
           ) : (
-            <p className="text-sm text-slate-200">Only candidates can apply to jobs.</p>
+            <p className="text-small text-slate-600">Only candidates can apply to jobs.</p>
           )}
         </div>
       </GlassCard>

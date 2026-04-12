@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gemini Chat</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <h1>Gemini Chat</h1>
+        <p class="subtitle">Local demo — API key stays on the server</p>
+      </header>
+
+      <main class="chat-panel" id="chat-panel" aria-live="polite">
+        <div class="messages" id="messages"></div>
+        <div class="typing typing--hidden" id="typing" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+      </main>
+
+      <form class="composer" id="composer" novalidate>
+        <label class="sr-only" for="message-input">Your message</label>
+        <textarea
+          id="message-input"
+          rows="1"
+          placeholder="Type a message…"
+          autocomplete="off"
+          maxlength="8000"
+        ></textarea>
+        <button type="submit" id="send-btn">Send</button>
+      </form>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>

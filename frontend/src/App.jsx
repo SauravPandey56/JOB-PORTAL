@@ -13,19 +13,27 @@ import CandidateApplications from "./pages/CandidateApplications.jsx";
 import RecruiterJobs from "./pages/RecruiterJobs.jsx";
 import RecruiterJobForm from "./pages/RecruiterJobForm.jsx";
 import RecruiterApplicants from "./pages/RecruiterApplicants.jsx";
-import AdminAnalytics from "./pages/AdminAnalytics.jsx";
+import AdminLayout from "./layouts/AdminLayout.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
 import AdminUsers from "./pages/AdminUsers.jsx";
 import AdminJobs from "./pages/AdminJobs.jsx";
+import AdminRecruiters from "./pages/AdminRecruiters.jsx";
+import AdminApplications from "./pages/AdminApplications.jsx";
+import AdminFeedback from "./pages/AdminFeedback.jsx";
+import AdminReports from "./pages/AdminReports.jsx";
+import AdminAnalyticsPage from "./pages/AdminAnalyticsPage.jsx";
+import AdminModeration from "./pages/AdminModeration.jsx";
+import AdminSettings from "./pages/AdminSettings.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import ChatbotWidget from "./components/ChatbotWidget.jsx";
 
 export default function App() {
   return (
-    <div className="min-h-screen">
-      <div className="app-bg" />
+    <div className="app-shell-bg min-h-screen">
       <Navbar />
       <ToasterHost />
       <ChatbotWidget />
+      <main id="main-content" className="outline-none" tabIndex={-1}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -95,34 +103,30 @@ export default function App() {
           }
         />
 
-        {/* Admin */}
+        {/* Admin — nested layout + routes */}
         <Route
           path="/admin"
           element={
             <ProtectedRoute roles={["admin"]}>
-              <AdminAnalytics />
+              <AdminLayout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <ProtectedRoute roles={["admin"]}>
-              <AdminUsers />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/jobs"
-          element={
-            <ProtectedRoute roles={["admin"]}>
-              <AdminJobs />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="recruiters" element={<AdminRecruiters />} />
+          <Route path="jobs" element={<AdminJobs />} />
+          <Route path="applications" element={<AdminApplications />} />
+          <Route path="feedback" element={<AdminFeedback />} />
+          <Route path="reports" element={<AdminReports />} />
+          <Route path="analytics" element={<AdminAnalyticsPage />} />
+          <Route path="moderation" element={<AdminModeration />} />
+          <Route path="settings" element={<AdminSettings />} />
+        </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </main>
     </div>
   );
 }

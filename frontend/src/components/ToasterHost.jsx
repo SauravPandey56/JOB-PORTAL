@@ -5,14 +5,16 @@ export default function ToasterHost() {
     <Toaster
       position="top-right"
       toastOptions={{
+        duration: 4000,
         style: {
-          background: "rgba(15, 23, 42, 0.85)",
-          color: "#e2e8f0",
-          border: "1px solid rgba(148, 163, 184, 0.2)",
-          backdropFilter: "blur(10px)",
+          background: "#ffffff",
+          color: "#0F172A",
+          border: "1px solid #e2e8f0",
+          boxShadow: "0 12px 40px rgba(15, 23, 42, 0.1)",
         },
+        success: { iconTheme: { primary: "#2563EB", secondary: "#fff" } },
+        error: { iconTheme: { primary: "#dc2626", secondary: "#fff" } },
       }}
     />
   );
 }
-

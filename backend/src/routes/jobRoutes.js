@@ -8,11 +8,13 @@ import {
   listJobs,
   getJob,
   listRecruiterJobs,
+  getRecruiterDashboard,
 } from "../controllers/jobController.js";
 
 const router = express.Router();
 
 router.get("/", listJobs);
+router.get("/mine/dashboard", protect, requireRole("recruiter", "admin"), getRecruiterDashboard);
 router.get("/mine", protect, requireRole("recruiter", "admin"), listRecruiterJobs);
 router.get("/:id", getJob);
 router.post("/", protect, requireRole("recruiter", "admin"), createJob);

@@ -18,9 +18,14 @@ import userRoutes from "./src/routes/userRoutes.js";
 import jobRoutes from "./src/routes/jobRoutes.js";
 import applicationRoutes from "./src/routes/applicationRoutes.js";
 import adminRoutes from "./src/routes/adminRoutes.js";
+import feedbackRoutes from "./src/routes/feedbackRoutes.js";
 import chatbotRoutes from "./src/routes/chatbotRoutes.js";
+import chatRoutes from "./src/routes/chatRoutes.js";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// Load env from this file's directory so variables work when cwd is not `backend/`
+dotenv.config({ path: path.join(__dirname, ".env") });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,8 +57,6 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 // Static uploads (local only)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const uploadDir = process.env.UPLOAD_DIR || "uploads";
 app.use("/uploads", express.static(path.join(__dirname, uploadDir)));
 
@@ -65,7 +68,9 @@ app.use("/api/users", userRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/feedback", feedbackRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/chat", chatRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
