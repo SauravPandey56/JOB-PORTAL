@@ -6,15 +6,46 @@ import { Notification } from "../models/Notification.js";
 
 export async function updateProfile(req, res) {
   const update = {};
-  const allowed = ["name", "skills", "qualification", "preferredCategory"];
+  const allowed = [
+     "name", "headline", "location", "phone", "skills", "qualification", "preferredCategory",
+     "experience", "education", "projects", "certifications", "designation"
+  ];
   for (const k of allowed) {
     if (req.body[k] !== undefined) update[k] = req.body[k];
   }
+  
+  if (req.body.socialLinks) {
+     update.socialLinks = req.body.socialLinks;
+  }
+  
+  if (req.body.company) {
+     update.company = { ...req.body.company };
+  }
+
   if (typeof update.skills === "string") {
     update.skills = update.skills.split(",").map((s) => s.trim()).filter(Boolean);
   }
-  const user = await User.findByIdAndUpdate(req.user.id, update, { new: true }).lean();
+  
+  const user = await User.findByIdAndUpdate(req.user.id, { $set: update }, { new: true }).lean();
   return res.json({ user });
+}
+
+export async function uploadImage(req, res) {
+  if (!req.file) return res.status(400).json({ message: "No image uploaded" });
+  const urlPath = `/uploads/images/${path.basename(req.file.path)}`.replaceAll("\\", "/");
+  
+  // Find out if they wanted to update avatar or company logo via query param?
+  // By default, just update avatar. If type=company, update company.logoUrl.
+  // We can also let the frontend receive the URL and then call updateProfile.
+  // Return the URL so frontend can save it to the right place.
+  const isCompany = req.query.type === 'company_banner' || req.query.type === 'company_logo';
+  
+  let updateObj = { avatarUrl: urlPath };
+  if (req.query.type === 'company_logo') updateObj = { 'company.logoUrl': urlPath };
+  if (req.query.type === 'company_banner') updateObj = { 'company.bannerUrl': urlPath };
+  
+  const user = await User.findByIdAndUpdate(req.user.id, { $set: updateObj }, { new: true }).lean();
+  return res.json({ user, imageUrl: urlPath });
 }
 
 export async function uploadResume(req, res) {

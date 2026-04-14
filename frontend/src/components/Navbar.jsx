@@ -3,33 +3,13 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../state/AuthContext.jsx";
 import AnimatedLogo from "./AnimatedLogo.jsx";
 import ProfileMenu from "./ProfileMenu.jsx";
-
-const linkBase =
-  "rounded-xl px-3 py-2.5 text-small font-medium transition min-h-[2.75rem] inline-flex items-center justify-center";
-
-function navClass() {
-  return ({ isActive }) =>
-    [
-      linkBase,
-      isActive ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-100 hover:text-dark",
-    ].join(" ");
-}
-
-function navClassBlock() {
-  return ({ isActive }) =>
-    [
-      "flex w-full items-center justify-center text-center sm:justify-start sm:text-left",
-      linkBase,
-      isActive ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-100 hover:text-dark",
-    ].join(" ");
-}
+import { Menu, X } from "lucide-react";
 
 export default function Navbar() {
   const loc = useLocation();
   const { isAuthed } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const navLinkClass = navClass();
-  const navLinkClassBlock = navClassBlock();
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -44,109 +24,124 @@ export default function Navbar() {
     return () => window.removeEventListener("keydown", onKey);
   }, [mobileOpen]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const navLinkClass = ({ isActive }) =>
+    `text-sm font-medium transition-colors hover:text-indigo-600 dark:hover:text-indigo-400 ${
+      isActive ? "text-indigo-600 dark:text-indigo-400" : "text-[var(--text-muted)]"
+    }`;
+
+  const mobileNavLinkClass = ({ isActive }) =>
+    `block px-4 py-3 text-sm font-medium transition-colors rounded-xl ${
+      isActive ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400" : "text-[var(--text-muted)] hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600"
+    }`;
+
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
-      <a href="#main-content" className="skip-link">
+    <header 
+      className={`sticky top-0 z-50 transition-all duration-300 w-full ${
+        scrolled 
+          ? "bg-[var(--card-bg)]/95 backdrop-blur-md shadow-sm border-b border-[var(--border-subtle)] py-3" 
+          : "bg-[var(--card-bg)]/80 backdrop-blur-md border-b border-transparent py-4"
+      }`}
+    >
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:bg-indigo-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-xl focus:z-50">
         Skip to main content
       </a>
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-        <Link to="/" className="flex min-h-[2.75rem] items-center gap-2.5 font-semibold tracking-tight text-dark">
-          <AnimatedLogo />
-          <span className="text-h3">TalentOrbit</span>
+      
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
+             <AnimatedLogo />
+          </div>
+          <span className="text-xl font-bold tracking-tight text-[var(--text-main)]">TalentOrbit</span>
         </Link>
 
-        <div className="flex flex-1 items-center justify-end gap-2">
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
-            <NavLink to="/jobs" className={navLinkClass}>
-              Jobs
-            </NavLink>
-            <a href="/#companies" className={linkBase + " text-slate-600 hover:bg-slate-100 hover:text-dark"}>
-              Companies
-            </a>
-            <Link
-              to="/register?intent=recruiter"
-              className={linkBase + " text-slate-600 hover:bg-slate-100 hover:text-dark"}
+        {/* Desktop Navigation */}
+        <nav className="hidden items-center gap-8 md:flex lg:gap-10" aria-label="Primary">
+          <NavLink to="/jobs" className={navLinkClass}>Jobs</NavLink>
+          <a href="/#companies" className="text-sm font-medium text-[var(--text-muted)] hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Companies</a>
+          <Link to="/register?intent=recruiter" className="text-sm font-medium text-[var(--text-muted)] hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">For Recruiters</Link>
+          <a href="/#resources" className="text-sm font-medium text-[var(--text-muted)] hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Career Advice</a>
+        </nav>
+
+        {/* Auth Buttons */}
+        <div className="flex items-center gap-3">
+          {!isAuthed ? (
+            <div className="hidden md:flex items-center gap-3">
+              <Link 
+                to="/login" 
+                className="text-sm font-medium text-[var(--text-main)] hover:text-indigo-600 px-4 py-2 rounded-xl transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                Log In
+              </Link>
+              <Link 
+                to="/register" 
+                className="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 hover:shadow-md px-5 py-2.5 rounded-xl transition-all"
+              >
+                Create Account
+              </Link>
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center gap-4">
+              <Link to="/dashboard" className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700">Go to Dashboard</Link>
+              <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+              <ProfileMenu />
+            </div>
+          )}
+
+          {/* Mobile Menu Toggle */}
+          <div className="flex items-center gap-2 md:hidden">
+            {isAuthed && <ProfileMenu />}
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-[var(--text-main)] hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen((o) => !o)}
             >
-              For recruiters
-            </Link>
-
-            {!isAuthed ? (
-              <>
-                <NavLink to="/login" className={navLinkClass}>
-                  Login
-                </NavLink>
-                <NavLink
-                  to="/register"
-                  className={({ isActive }) =>
-                    [
-                      linkBase,
-                      "ml-1 bg-primary text-white shadow-md hover:bg-blue-700",
-                      isActive ? "ring-2 ring-primary/40" : "",
-                    ].join(" ")
-                  }
-                >
-                  Register
-                </NavLink>
-              </>
-            ) : (
-              <NavLink to="/dashboard" className={navLinkClass}>
-                Dashboard
-              </NavLink>
-            )}
-          </nav>
-
-          {isAuthed ? <ProfileMenu /> : null}
-
-          <button
-            type="button"
-            className="inline-flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center rounded-xl border border-slate-200 bg-white text-sm text-dark hover:bg-slate-50 md:hidden"
-            aria-expanded={mobileOpen}
-            aria-controls="site-mobile-nav"
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            onClick={() => setMobileOpen((o) => !o)}
-          >
-            {mobileOpen ? (
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
+              <span className="sr-only">{mobileOpen ? "Close menu" : "Open menu"}</span>
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* Mobile Navigation */}
       <div
-        id="site-mobile-nav"
-        className={["border-t border-slate-200 bg-white md:hidden", mobileOpen ? "block" : "hidden"].join(" ")}
+        className={`md:hidden absolute w-full bg-[var(--card-bg)] border-b border-[var(--border-subtle)] shadow-xl transition-all duration-300 overflow-hidden origin-top ${
+          mobileOpen ? "opacity-100 scale-y-100" : "opacity-0 scale-y-0"
+        }`}
       >
-        <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-3" aria-label="Primary mobile">
-          <NavLink to="/jobs" className={navLinkClassBlock}>
-            Jobs
-          </NavLink>
-          <a href="/#companies" className={navLinkClassBlock({ isActive: false })}>
-            Companies
-          </a>
-          <Link to="/register?intent=recruiter" className={navLinkClassBlock({ isActive: false })}>
-            For recruiters
-          </Link>
+        <div className="px-4 py-6 space-y-2 max-w-7xl mx-auto max-h-[80vh] overflow-y-auto">
+          <NavLink to="/jobs" className={mobileNavLinkClass}>Jobs</NavLink>
+          <a href="/#companies" className="block px-4 py-3 text-sm font-medium text-[var(--text-muted)] hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-colors">Companies</a>
+          <Link to="/register?intent=recruiter" className="block px-4 py-3 text-sm font-medium text-[var(--text-muted)] hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-colors">For Recruiters</Link>
+          <a href="/#resources" className="block px-4 py-3 text-sm font-medium text-[var(--text-muted)] hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-colors">Career Advice</a>
+          
+          <div className="h-px bg-slate-100 dark:bg-slate-800 my-4" />
+          
           {!isAuthed ? (
-            <>
-              <NavLink to="/login" className={navLinkClassBlock}>
-                Login
-              </NavLink>
-              <NavLink to="/register" className={navLinkClassBlock}>
-                Register
-              </NavLink>
-            </>
+            <div className="grid grid-cols-2 gap-3 pb-2">
+              <Link to="/login" className="flex justify-center items-center px-4 py-3 text-sm font-medium text-[var(--text-main)] bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors">
+                Log In
+              </Link>
+              <Link to="/register" className="flex justify-center items-center px-4 py-3 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors">
+                Create Account
+              </Link>
+            </div>
           ) : (
-            <NavLink to="/dashboard" className={navLinkClassBlock}>
-              Dashboard
-            </NavLink>
+             <div className="pb-2">
+                <Link to="/dashboard" className="flex justify-center items-center px-4 py-3 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors">
+                   Go to Dashboard
+                </Link>
+             </div>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   );

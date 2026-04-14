@@ -3,28 +3,60 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --app-bg-gradient: linear-gradient(135deg, #f8fafc, #eef2ff);
+    --card-bg: #ffffff;
+    --card-bg-opacity: rgba(255, 255, 255, 0.8);
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-subtle: #e2e8f0;
+    --border-opacity: rgba(255, 255, 255, 0.6);
+  }
+
   html {
     scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-surface font-sans text-body text-dark antialiased;
+    background: var(--app-bg-gradient);
+    background-attachment: fixed;
+    color: var(--text-main);
+    @apply font-sans antialiased transition-colors duration-300;
   }
 
   :where(a, button):focus-visible {
-    @apply outline-none ring-2 ring-primary/50 ring-offset-2 ring-offset-surface;
+    @apply outline-none ring-2 ring-primary/50 ring-offset-2 ring-offset-transparent;
   }
 }
 
 @layer components {
-  /* Unified marketing / app shell background */
+  /* Unified marketing / app shell background. We're replacing its default background styling to be transparent since AnimatedBackground will handle it. */
   .app-shell-bg {
-    background: linear-gradient(165deg, #f9fafb 0%, #eef2ff 40%, #f9fafb 100%);
+    background: transparent;
     min-height: 100vh;
   }
 
+  .glass-card {
+    background-color: var(--card-bg-opacity);
+    border-color: var(--border-opacity);
+    @apply rounded-2xl backdrop-blur-md shadow-[0_4px_24px_rgba(0,0,0,0.04)] border transition-all duration-300;
+  }
+
+  .glass-panel {
+    background-color: var(--card-bg-opacity);
+    border-color: var(--border-opacity);
+    @apply rounded-3xl backdrop-blur-xl shadow-sm border transition-all duration-300;
+  }
+
+  .hover-card-effect {
+    @apply transition-all duration-300 hover:-translate-y-[5px] hover:shadow-xl hover:shadow-primary/10;
+  }
+
   .input-field {
-    @apply w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-body text-dark placeholder:text-slate-400 transition-colors;
+    background-color: var(--card-bg);
+    color: var(--text-main);
+    border-color: var(--border-subtle);
+    @apply w-full min-h-[2.75rem] rounded-xl border px-4 py-2.5 text-body transition-colors focus:ring-primary/25 placeholder:text-slate-400;
   }
 
   .input-field:focus,
@@ -41,7 +73,10 @@
   }
 
   .btn-secondary {
-    @apply inline-flex min-h-[2.75rem] items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-small font-semibold text-dark shadow-sm transition hover:border-primary/30 hover:bg-slate-50 hover:shadow-md;
+    background-color: var(--card-bg);
+    color: var(--text-main);
+    border-color: var(--border-subtle);
+    @apply inline-flex min-h-[2.75rem] items-center justify-center rounded-xl border px-4 py-2.5 text-small font-semibold shadow-sm transition hover:border-primary/30 hover:shadow-md;
   }
 
   .skip-link {
@@ -49,7 +84,10 @@
   }
 
   .card-surface {
-    @apply rounded-2xl border border-slate-200/90 bg-white p-6 shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-card-hover;
+    background-color: var(--card-bg);
+    border-color: var(--border-subtle);
+    color: var(--text-main);
+    @apply rounded-2xl border p-6 shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-card-hover;
   }
 
   .section-y {
@@ -142,4 +180,37 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes gradient-x {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-gradient-x {
+  animation: gradient-x 15s ease infinite;
+  background-size: 200% 200%;
+}
+
+@keyframes bg-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-bg-shift {
+  animation: bg-shift 20s ease infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-30px) scale(1.05); }
+}
+
+.animate-float-slow {
+  animation: float 18s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float 12s ease-in-out infinite;
 }

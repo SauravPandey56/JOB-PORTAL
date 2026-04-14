@@ -61,8 +61,12 @@ export function AuthProvider({ children }) {
     setUser(res.data.user);
   };
 
+  const updateUser = (newUser) => {
+    setUser(newUser);
+  };
+
   const value = useMemo(
-    () => ({ token, user, loading, login, register, logout, refreshMe, isAuthed: !!token }),
+    () => ({ token, user, loading, login, register, logout, refreshMe, updateUser, isAuthed: !!token }),
     [token, user, loading]
   );
 

@@ -57,6 +57,14 @@ export default {
           "33%": { transform: "translate(24px, -18px) scale(1.05)" },
           "66%": { transform: "translate(-16px, 12px) scale(0.95)" },
         },
+        marquee: {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(-50%)" },
+        },
+        "marquee-reverse": {
+          from: { transform: "translateX(-50%)" },
+          to: { transform: "translateX(0)" },
+        },
       },
       animation: {
         "logo-shift": "logo-shift 5s ease-in-out infinite",
@@ -66,6 +74,8 @@ export default {
         "hero-in": "hero-in 0.75s ease-out forwards",
         "chat-pulse": "chat-pulse-ring 2s ease-out infinite",
         "home-blob": "home-blob 22s ease-in-out infinite",
+        marquee: "marquee 40s linear infinite",
+        "marquee-reverse": "marquee-reverse 50s linear infinite",
       },
     },
   },

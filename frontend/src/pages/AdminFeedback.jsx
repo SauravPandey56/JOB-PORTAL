@@ -1,12 +1,73 @@
-import { useCallback, useEffect, useState } from "react";
-import { RefreshCw, CheckCircle, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState, useRef } from "react";
+import { RefreshCw, CheckCircle, Trash2, Search, MoreVertical, Reply, Inbox as InboxIcon } from "lucide-react";
 import toast from "react-hot-toast";
-import GlassCard from "../components/GlassCard.jsx";
 import { api } from "../utils/api.js";
+
+function useOnClickOutside(ref, handler) {
+  useEffect(() => {
+    const listener = (event) => {
+      if (!ref.current || ref.current.contains(event.target)) return;
+      handler(event);
+    };
+    document.addEventListener("mousedown", listener);
+    return () => document.removeEventListener("mousedown", listener);
+  }, [ref, handler]);
+}
+
+function FeedbackActionsDropdown({ f, busy, resolve, del }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef();
+  useOnClickOutside(ref, () => setOpen(false));
+
+  const reply = () => {
+    toast.success("Opening reply modal (mock UI)");
+    setOpen(false);
+  };
+
+  return (
+    <div className="relative inline-block text-left" ref={ref}>
+      <button 
+        onClick={() => setOpen(!open)}
+        className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+      >
+        <MoreVertical className="h-4 w-4" />
+      </button>
+      
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-slate-100 bg-white py-1 shadow-lg ring-1 ring-black/5">
+          {f.status !== "resolved" && (
+            <button
+              disabled={busy === f._id}
+              onClick={() => { resolve(f._id); setOpen(false); }}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 w-full text-left"
+            >
+              <CheckCircle className="h-4 w-4 text-emerald-500" /> Mark Resolved
+            </button>
+          )}
+
+          <button onClick={reply} className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 w-full text-left">
+            <Reply className="h-4 w-4 text-indigo-500" /> Reply via Email
+          </button>
+
+          <div className="my-1 h-px bg-slate-100" />
+
+          <button
+            disabled={busy === f._id}
+            onClick={() => { del(f._id); setOpen(false); }}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 w-full text-left"
+          >
+            <Trash2 className="h-4 w-4" /> Delete Feedback
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminFeedback() {
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState("");
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
 
@@ -40,7 +101,7 @@ export default function AdminFeedback() {
   };
 
   const del = async (id) => {
-    if (!window.confirm("Delete this message?")) return;
+    if (!window.confirm("Delete this feedback permanently?")) return;
     setBusy(id);
     try {
       await api.delete(`/admin/feedback/${id}`);
@@ -53,88 +114,130 @@ export default function AdminFeedback() {
     }
   };
 
+  const filteredItems = items.filter(f => {
+    if(!search.trim()) return true;
+    const q = search.toLowerCase();
+    const name = (f.name || "anonymous").toLowerCase();
+    const email = (f.email || "").toLowerCase();
+    const msg = (f.message || "").toLowerCase();
+    return name.includes(q) || email.includes(q) || msg.includes(q);
+  });
+
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Feedback</h1>
-          <p className="text-sm text-slate-600">Inbox from the public feedback form on the marketing site.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <select
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="">All</option>
-            <option value="new">New</option>
-            <option value="resolved">Resolved</option>
-          </select>
-          <button
-            type="button"
-            onClick={() => load()}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm hover:bg-slate-50"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </button>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Feedback Inbox</h1>
+          <p className="mt-1 text-sm text-slate-500">Manage support inquiries, bug reports, and user feedback.</p>
         </div>
       </div>
 
-      {loading ? (
-        <GlassCard className="p-8 text-center">Loading…</GlassCard>
-      ) : items.length === 0 ? (
-        <GlassCard className="p-8 text-center text-slate-500">No messages yet.</GlassCard>
-      ) : (
-        <div className="space-y-3">
-          {items.map((f) => (
-            <GlassCard key={f._id} className="p-5 transition hover:shadow-md">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-slate-900">{f.name || "Anonymous"}</span>
-                    <span className="text-sm text-slate-500">{f.email}</span>
-                    <span
-                      className={[
-                        "rounded-full px-2 py-0.5 text-xs font-semibold",
-                        f.status === "resolved" ? "bg-emerald-100 text-emerald-800" : "bg-sky-100 text-sky-800",
-                      ].join(" ")}
-                    >
-                      {f.status === "resolved" ? "Resolved" : "New"}
-                    </span>
-                  </div>
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{f.message}</p>
-                  <p className="mt-2 text-xs text-slate-400">
-                    {f.createdAt ? new Date(f.createdAt).toLocaleString() : ""}
-                  </p>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  {f.status !== "resolved" ? (
-                    <button
-                      type="button"
-                      disabled={busy === f._id}
-                      onClick={() => resolve(f._id)}
-                      className="inline-flex items-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      Resolve
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    disabled={busy === f._id}
-                    onClick={() => del(f._id)}
-                    className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800 hover:bg-rose-100 disabled:opacity-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </GlassCard>
-          ))}
+      {/* Control Bar */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between rounded-2xl bg-white p-2 shadow-sm border border-slate-100">
+        <div className="flex flex-1 items-center gap-2">
+           <div className="relative flex-1 max-w-sm ml-2">
+             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+             <input
+               value={search}
+               onChange={(e) => setSearch(e.target.value)}
+               placeholder="Search by name, email, or message..."
+               className="w-full rounded-xl border-none bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+             />
+           </div>
+           
+           <div className="relative">
+             <select
+               className="appearance-none rounded-xl border border-slate-200 bg-white pl-4 pr-10 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+               value={status}
+               onChange={(e) => setStatus(e.target.value)}
+             >
+               <option value="">All Statuses</option>
+               <option value="new">New (Unresolved)</option>
+               <option value="resolved">Resolved</option>
+             </select>
+             <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+             </div>
+           </div>
         </div>
-      )}
+        
+        <button
+          type="button"
+          onClick={() => load()}
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+        >
+          <RefreshCw className="h-4 w-4" /> Refresh Inbox
+        </button>
+      </div>
+
+      {/* Table view */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead className="border-b border-slate-100 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <tr>
+                <th className="px-6 py-4 whitespace-nowrap">User Name</th>
+                <th className="px-6 py-4 whitespace-nowrap">Email Address</th>
+                <th className="px-6 py-4">Message Preview</th>
+                <th className="px-6 py-4 whitespace-nowrap">Status</th>
+                <th className="px-6 py-4 whitespace-nowrap">Date Received</th>
+                <th className="px-6 py-4 text-right whitespace-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr>
+                   <td colSpan={6} className="px-6 py-12 text-center">
+                      <RefreshCw className="h-6 w-6 animate-spin text-primary mx-auto" />
+                   </td>
+                </tr>
+              ) : filteredItems.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                    <div className="flex flex-col items-center justify-center">
+                       <InboxIcon className="h-8 w-8 text-slate-300 mb-2" />
+                       <p>Inbox is empty.</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredItems.map((f) => (
+                  <tr key={f._id} className="transition hover:bg-slate-50/50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                       <span className="font-semibold text-slate-900">{f.name || "Anonymous User"}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-slate-600">
+                       {f.email || "—"}
+                    </td>
+                    <td className="px-6 py-4">
+                       <p className="text-slate-700 line-clamp-2 min-w-[200px] text-xs leading-relaxed">{f.message}</p>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                       {f.status === "resolved" ? (
+                          <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                             <CheckCircle className="h-3 w-3" /> Resolved
+                          </span>
+                       ) : (
+                          <span className="inline-flex items-center gap-1 rounded bg-sky-50 px-2 py-1 text-xs font-medium text-sky-700 ring-1 ring-inset ring-sky-600/20">
+                             <span className="h-1.5 w-1.5 rounded-full bg-sky-500"></span> New
+                          </span>
+                       )}
+                    </td>
+                    <td className="px-6 py-4 text-slate-500 whitespace-nowrap">
+                      {f.createdAt ? new Date(f.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "—"}
+                    </td>
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                       <FeedbackActionsDropdown f={f} busy={busy} resolve={resolve} del={del} />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

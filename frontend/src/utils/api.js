@@ -11,3 +11,9 @@ export function setAuthToken(token) {
   else delete api.defaults.headers.common.Authorization;
 }
 
+export function apiErrorMessage(err) {
+  const d = err?.response?.data;
+  if (d?.message) return d.message;
+  if (Array.isArray(d?.errors) && d.errors[0]?.msg) return d.errors[0].msg;
+  return err?.message || "Something went wrong. Please try again.";
+}

@@ -2,11 +2,25 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { ROLES } from "../utils/constants.js";
 
+const userSocialSchema = new mongoose.Schema(
+  {
+    linkedin: { type: String, trim: true },
+    github: { type: String, trim: true },
+    portfolio: { type: String, trim: true },
+  },
+  { _id: false }
+);
+
 const recruiterCompanySchema = new mongoose.Schema(
   {
     name: { type: String, trim: true },
     description: { type: String, trim: true },
     website: { type: String, trim: true },
+    logoUrl: { type: String, trim: true },
+    bannerUrl: { type: String, trim: true },
+    size: { type: String, trim: true },
+    industry: { type: String, trim: true },
+    culture: { type: String, trim: true },
   },
   { _id: false }
 );
@@ -29,11 +43,22 @@ const userSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    // Generic profile
+    avatarUrl: { type: String, trim: true },
+    headline: { type: String, trim: true },
+    location: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    socialLinks: { type: userSocialSchema, default: {} },
 
     // Candidate profile
     skills: { type: [String], default: [] },
     qualification: { type: String, trim: true },
     preferredCategory: { type: String, trim: true },
+    experience: { type: mongoose.Schema.Types.Mixed, default: [] },
+    education: { type: mongoose.Schema.Types.Mixed, default: [] },
+    projects: { type: mongoose.Schema.Types.Mixed, default: [] },
+    certifications: { type: mongoose.Schema.Types.Mixed, default: [] },
+
     resume: {
       url: { type: String },
       originalName: { type: String },
@@ -41,7 +66,8 @@ const userSchema = new mongoose.Schema(
     },
 
     // Recruiter profile
-    company: recruiterCompanySchema,
+    designation: { type: String, trim: true },
+    company: { type: recruiterCompanySchema, default: {} },
 
     /** Candidate bookmarked jobs (max enforced in controller) */
     savedJobs: {

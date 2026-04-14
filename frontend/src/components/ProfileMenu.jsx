@@ -17,9 +17,7 @@ function roleLabel(role) {
 }
 
 function profilePath(role) {
-  if (role === "candidate") return "/candidate";
-  if (role === "admin") return "/admin";
-  return "/dashboard";
+  return "/profile";
 }
 
 function settingsPath(role) {
