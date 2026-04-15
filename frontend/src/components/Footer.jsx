@@ -83,7 +83,7 @@ export default function Footer() {
          {/* Bottom Bar */}
          <div className="mt-16 border-t border-slate-200/80 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-slate-500 text-center md:text-left">
-               © {new Date().getFullYear()} TalentOrbit Inc. All rights reserved.
+               © {new Date().getFullYear()} Saurav Pandey .. All rights reserved.
             </p>
             <div className="flex items-center gap-6 text-sm text-slate-500">
                <span className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-emerald-500"></div> All systems operational</span>
